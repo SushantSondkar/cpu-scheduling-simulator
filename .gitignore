@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Logs & Environment
+*.log
+.env
+
+# Editor and Tool Configuration
+.vscode/
+.idea/
+.gemini/

@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CPU Scheduling Algorithm Simulator | Problem Statement 55</title>
+  <meta name="description" content="OS Coursework Problem Statement 55: Compare Average Turnaround Times Across All Algorithms (FCFS, SJF, SRTF, Priority NP/P, Round Robin) with Gantt Charts, Metrics, and Dry Run Simulator.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Application Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-wrapper">
+        <div class="brand-icon" aria-hidden="true">CPU</div>
+        <div class="brand-titles">
+          <h1>CPU Scheduling Simulator</h1>
+          <span class="brand-badge">OS Coursework • Problem Statement 55</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button id="btn-export-csv" class="btn btn-secondary btn-sm" title="Export full report to CSV">
+          <span aria-hidden="true">📥</span> Export CSV
+        </button>
+        <button id="btn-print" class="btn btn-secondary btn-sm" title="Print friendly view / Save as PDF">
+          <span aria-hidden="true">🖨️</span> Print / PDF
+        </button>
+        <button id="btn-theme-toggle" class="btn btn-secondary btn-icon" title="Toggle Light/Dark Theme" aria-label="Toggle Theme">
+          <span id="theme-icon">☀️</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Top Navigation Tabs -->
+  <nav class="nav-tabs" role="tablist" aria-label="Simulator Navigation">
+    <button class="nav-tab-btn active" data-tab="tab-input" role="tab" aria-selected="true">
+      <span>⚙️</span> Inputs & Configuration
+    </button>
+    <button class="nav-tab-btn" data-tab="tab-comparison" role="tab" aria-selected="false">
+      <span>🏆</span> Turnaround Time Comparison (PS 55)
+    </button>
+    <button class="nav-tab-btn" data-tab="tab-details" role="tab" aria-selected="false">
+      <span>📊</span> Gantt Charts & Detailed Results
+    </button>
+    <button class="nav-tab-btn" data-tab="tab-dryrun" role="tab" aria-selected="false">
+      <span>🔍</span> Step-by-Step Dry Run Inspector
+    </button>
+    <button class="nav-tab-btn" data-tab="tab-theory" role="tab" aria-selected="false">
+      <span>📖</span> Theory & Viva Voce Guide
+    </button>
+  </nav>
+
+  <!-- Main Content Container -->
+  <main class="app-main">
+
+    <!-- =================================================================== -->
+    <!-- TAB 1: INPUTS & CONFIGURATION -->
+    <!-- =================================================================== -->
+    <section id="tab-input" class="tab-panel active">
+      <div class="grid-2col">
+        <!-- Process Table Card -->
+        <div class="card" id="input-panel">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title"><span>📋</span> Process Input Set</h2>
+              <p class="card-subtitle">Enter one process set to run across all scheduling algorithms.</p>
+            </div>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+              <button id="btn-add-process" class="btn btn-secondary btn-sm">
+                <span>➕</span> Add Process
+              </button>
+              <button id="btn-clear-table" class="btn btn-danger btn-sm">
+                <span>🗑️</span> Clear Table
+              </button>
+            </div>
+          </div>
+
+          <!-- Process Input Table -->
+          <div class="table-responsive">
+            <table class="data-table" id="procs-input-table">
+              <thead>
+                <tr>
+                  <th style="width: 22%;">Process ID</th>
+                  <th style="width: 24%;">Arrival Time (AT)</th>
+                  <th style="width: 24%;">Burst Time (BT)</th>
+                  <th style="width: 20%;">Priority</th>
+                  <th style="width: 10%; text-align: center;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="procs-table-body">
+                <!-- Dynamically populated via ui.js -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Inline Error Messages Box -->
+          <div id="input-error-box" class="error-box" style="margin-top: 1rem;">
+            <strong>⚠️ Input Errors Detected:</strong>
+            <ul id="error-list"></ul>
+          </div>
+
+          <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
+            <button id="btn-run-all" class="btn btn-primary" style="font-size: 1rem; padding: 0.75rem 1.75rem;">
+              <span>⚡</span> Run All Algorithms
+            </button>
+          </div>
+        </div>
+
+        <!-- Settings & Configuration Card -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title"><span>⚙️</span> Simulator Options & Presets</h2>
+              <p class="card-subtitle">Select presets, configure RR quantum, and predict the winner.</p>
+            </div>
+          </div>
+
+          <div class="config-panel">
+            <!-- Preset Selector -->
+            <div class="form-group">
+              <label for="preset-select" class="form-label">
+                <span>Preset Example Sets</span>
+              </label>
+              <select id="preset-select" class="form-control">
+                <option value="classic">Classic Test Set (Problem Statement 55)</option>
+                <option value="idleGaps">CPU Idle Gaps Set</option>
+                <option value="allAtZero">Convoy Effect (All AT = 0)</option>
+                <option value="heavyTies">Heavy Ties Set</option>
+              </select>
+              <span id="preset-description" class="form-hint"></span>
+            </div>
+
+            <!-- Quick Random Generator -->
+            <div style="display: flex; gap: 0.5rem;">
+              <button id="btn-load-preset" class="btn btn-secondary btn-sm" style="flex: 1;">
+                <span>🔄</span> Reset to Preset
+              </button>
+              <button id="btn-random-set" class="btn btn-secondary btn-sm" style="flex: 1;">
+                <span>🎲</span> Generate Random Set
+              </button>
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 0.25rem 0;">
+
+            <!-- Round Robin Quantum -->
+            <div class="form-group">
+              <label for="input-quantum" class="form-label">
+                <span>Round Robin Time Quantum (q)</span>
+                <span class="badge" style="font-size: 0.75rem; color: var(--accent-blue);">Units >= 1</span>
+              </label>
+              <input type="number" id="input-quantum" class="form-control" value="3" min="1" step="1">
+              <span class="form-hint">Determines CPU time slice before preemption in Round Robin.</span>
+            </div>
+
+            <!-- Priority Convention Toggle -->
+            <div class="toggle-wrapper">
+              <div>
+                <strong style="font-size: 0.88rem; display: block;">Priority Convention</strong>
+                <span id="priority-toggle-label" class="form-hint">Lower number = Higher priority (e.g. 1 &gt; 2)</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="toggle-lower-is-higher" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <!-- Predict Best Algorithm Feature (PS 55 Feature) -->
+            <div class="prediction-box">
+              <label for="prediction-select" class="form-label" style="color: var(--accent-indigo);">
+                <span>🎯 Student Prediction Challenge</span>
+              </label>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.6rem;">
+                Before running, predict which algorithm will achieve the <strong>lowest Average Turnaround Time</strong>!
+              </p>
+              <select id="prediction-select" class="form-control">
+                <option value="fcfs">FCFS (First-Come, First-Served)</option>
+                <option value="sjf">SJF (Shortest Job First - Non-Preemptive)</option>
+                <option value="srtf" selected>SRTF (Shortest Remaining Time First - Preemptive)</option>
+                <option value="priorityNp">Priority (Non-Preemptive)</option>
+                <option value="priorityP">Priority (Preemptive)</option>
+                <option value="rr">Round Robin (RR)</option>
+              </select>
+              <div id="prediction-feedback" class="prediction-result"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 2: TURNAROUND TIME COMPARISON (CORE OF PROBLEM STATEMENT 55) -->
+    <!-- =================================================================== -->
+    <section id="tab-comparison" class="tab-panel">
+      <!-- Winner Banner -->
+      <div id="winner-banner" class="winner-banner">
+        <div class="winner-content">
+          <div class="winner-trophy" aria-hidden="true">🏆</div>
+          <div class="winner-text">
+            <h3 id="winner-title">Best Algorithm by Average TAT</h3>
+            <p id="winner-subtitle">Calculating results...</p>
+          </div>
+        </div>
+        <div class="winner-badge" id="winner-avg-tat-badge">Avg TAT: --</div>
+      </div>
+
+      <!-- Comparison Chart Card -->
+      <div class="card" style="margin-bottom: 2rem;">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title"><span>📊</span> Average Turnaround Time Comparison Chart</h2>
+            <p class="card-subtitle">Lower is better. Winner is highlighted in gold.</p>
+          </div>
+          <span style="font-size: 0.8rem; color: var(--text-dim);">Pure SVG • Zero external dependencies</span>
+        </div>
+
+        <div class="chart-container">
+          <svg id="svg-tat-chart" class="svg-chart" viewBox="0 0 850 320" aria-label="Average Turnaround Time Bar Chart">
+            <!-- Rendered by ui.js -->
+          </svg>
+        </div>
+      </div>
+
+      <!-- Ranked Leaderboard Table Card -->
+      <div class="card" style="margin-bottom: 2rem;">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title"><span>🏅</span> Ranked Scheduling Algorithms Leaderboard</h2>
+            <p class="card-subtitle">Sorted by Average Turnaround Time (ascending). Ties share the same rank.</p>
+          </div>
+          <span class="badge" style="font-size: 0.78rem; background: var(--bg-card); padding: 0.35rem 0.7rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+            Rule: Idle gaps do NOT count as context switches
+          </span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table" id="leaderboard-table">
+            <thead>
+              <tr>
+                <th style="width: 8%;">Rank</th>
+                <th style="width: 22%;">Algorithm</th>
+                <th style="width: 14%;">Type</th>
+                <th style="width: 14%;">Avg TAT (units)</th>
+                <th style="width: 12%;">Avg WT</th>
+                <th style="width: 12%;">Context Switches</th>
+                <th style="width: 10%;">CPU Util %</th>
+                <th style="width: 8%;">Throughput</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboard-body">
+              <!-- Rendered by ui.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Per-Process Turnaround Time Breakdown Matrix -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title"><span>🔍</span> Per-Process Turnaround Time Breakdown</h2>
+            <p class="card-subtitle">Compare how each process fared under different scheduling policies.</p>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table" id="matrix-table">
+            <thead>
+              <tr id="matrix-head-row">
+                <th>Process</th>
+                <th>Arrival (AT)</th>
+                <th>Burst (BT)</th>
+                <th>Priority</th>
+                <th>FCFS TAT</th>
+                <th>SJF TAT</th>
+                <th>SRTF TAT</th>
+                <th>Priority NP TAT</th>
+                <th>Priority P TAT</th>
+                <th>RR TAT</th>
+              </tr>
+            </thead>
+            <tbody id="matrix-body">
+              <!-- Rendered by ui.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 3: DETAILED RESULTS & GANTT CHARTS -->
+    <!-- =================================================================== -->
+    <section id="tab-details" class="tab-panel">
+      <!-- Algorithm Selector Pills -->
+      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem;" id="algo-subtabs">
+        <button class="btn btn-secondary active-algo-pill" data-algo="fcfs">FCFS</button>
+        <button class="btn btn-secondary" data-algo="sjf">SJF (Non-Preemptive)</button>
+        <button class="btn btn-secondary" data-algo="srtf">SRTF (Preemptive)</button>
+        <button class="btn btn-secondary" data-algo="priorityNp">Priority (Non-Preemptive)</button>
+        <button class="btn btn-secondary" data-algo="priorityP">Priority (Preemptive)</button>
+        <button class="btn btn-secondary" data-algo="rr">Round Robin</button>
+      </div>
+
+      <!-- Selected Algorithm Result Card -->
+      <div class="card" id="algorithm-detail-card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title" id="detail-algo-title">FCFS (First-Come, First-Served)</h2>
+            <p class="card-subtitle" id="detail-algo-tag">Non-Preemptive • Order by Arrival Time, then PID</p>
+          </div>
+          <button id="btn-jump-dryrun" class="btn btn-primary btn-sm">
+            <span>▶️</span> Open in Dry Run Inspector
+          </button>
+        </div>
+
+        <!-- Metric Chips -->
+        <div class="metric-chip-group" id="detail-metric-chips">
+          <!-- Rendered by ui.js -->
+        </div>
+
+        <!-- Gantt Chart Section -->
+        <h3 style="font-size: 0.95rem; font-weight: 700; margin-top: 1rem; color: var(--text-main);">
+          <span>⏱️</span> Execution Gantt Chart
+        </h3>
+        <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+          Hover on blocks for process details. Hatched blocks indicate CPU IDLE periods. Red markers (⚡) indicate preemption.
+        </p>
+
+        <div class="gantt-wrapper">
+          <div class="gantt-bar-track" id="detail-gantt-track">
+            <!-- Rendered by ui.js -->
+          </div>
+          <div class="gantt-axis" id="detail-gantt-axis">
+            <!-- Rendered by ui.js -->
+          </div>
+        </div>
+
+        <!-- Detailed Process Table -->
+        <h3 style="font-size: 0.95rem; font-weight: 700; margin-top: 1.5rem; color: var(--text-main);">
+          <span>📊</span> Process Metrics Table
+        </h3>
+        <div class="table-responsive" style="margin-top: 0.5rem;">
+          <table class="data-table" id="detail-process-table">
+            <thead>
+              <tr>
+                <th>PID</th>
+                <th>Arrival (AT)</th>
+                <th>Burst (BT)</th>
+                <th>Priority (PR)</th>
+                <th>Completion (CT)</th>
+                <th>Turnaround (TAT)</th>
+                <th>Waiting (WT)</th>
+                <th>Response (RT)</th>
+              </tr>
+            </thead>
+            <tbody id="detail-process-tbody">
+              <!-- Rendered by ui.js -->
+            </tbody>
+            <tfoot id="detail-process-tfoot">
+              <!-- Rendered by ui.js -->
+            </tfoot>
+          </table>
+        </div>
+
+        <!-- Mathematical Working / Formula Breakdown -->
+        <div class="calculation-breakdown" id="detail-calc-box">
+          <!-- Rendered by ui.js -->
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 4: STEP-BY-STEP DRY RUN INSPECTOR -->
+    <!-- =================================================================== -->
+    <section id="tab-dryrun" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title"><span>🔍</span> Step-by-Step Scheduling Simulation Inspector</h2>
+            <p class="card-subtitle">Examine simulation decisions, ready queue status, and burst times at each clock tick.</p>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.6rem;">
+            <label for="dryrun-algo-select" style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">Algorithm:</label>
+            <select id="dryrun-algo-select" class="form-control" style="width: auto; padding: 0.35rem 0.6rem;">
+              <option value="srtf">SRTF (Preemptive)</option>
+              <option value="fcfs">FCFS</option>
+              <option value="sjf">SJF (Non-Preemptive)</option>
+              <option value="priorityNp">Priority (Non-Preemptive)</option>
+              <option value="priorityP">Priority (Preemptive)</option>
+              <option value="rr">Round Robin</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Player Controls -->
+        <div class="dry-run-controls">
+          <div class="playback-buttons">
+            <button id="btn-dry-reset" class="btn btn-secondary btn-icon" title="Reset to start">⏮</button>
+            <button id="btn-dry-prev" class="btn btn-secondary btn-icon" title="Step Previous">◀</button>
+            <button id="btn-dry-play" class="btn btn-primary btn-sm" style="min-width: 80px;" title="Play/Pause">
+              <span id="play-icon">▶</span> <span id="play-text">Play</span>
+            </button>
+            <button id="btn-dry-next" class="btn btn-secondary btn-icon" title="Step Next">▶</button>
+          </div>
+
+          <div class="step-indicator" id="dry-step-indicator">Step 0 of 0 (t = 0)</div>
+
+          <div class="speed-control">
+            <span>Speed:</span>
+            <input type="range" id="dry-speed-slider" min="200" max="1500" step="100" value="700">
+            <span id="dry-speed-label">Normal</span>
+          </div>
+        </div>
+
+        <!-- Synchronized Live Gantt Chart (reveals up to current step time) -->
+        <div style="margin-bottom: 1.25rem;">
+          <h4 style="font-size: 0.82rem; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.4rem;">
+            Gantt Chart Revealed Up To Current Step:
+          </h4>
+          <div class="gantt-wrapper" style="padding: 0.75rem;">
+            <div class="gantt-bar-track" id="dryrun-gantt-track" style="height: 42px;"></div>
+            <div class="gantt-axis" id="dryrun-gantt-axis"></div>
+          </div>
+        </div>
+
+        <!-- State Dashboard -->
+        <div class="dry-run-dashboard">
+          <!-- Left Column: CPU & Decision Reason -->
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <!-- Running Process & Event Card -->
+            <div class="dry-run-state-card">
+              <h4>CPU Status & Scheduling Event</h4>
+              <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem;">
+                <div class="running-process-display">
+                  <div class="running-chip" id="dry-running-chip">P1</div>
+                </div>
+                <span id="dry-event-badge" class="badge" style="background: var(--bg-surface); padding: 0.3rem 0.6rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); font-size: 0.8rem; font-weight: 700;">
+                  Event
+                </span>
+              </div>
+              <div class="reason-box" id="dry-reason-text">
+                Decision reasoning will be displayed here.
+              </div>
+            </div>
+
+            <!-- Ready Queue Card -->
+            <div class="dry-run-state-card">
+              <h4>Ready Queue Order (FIFO Front &rarr; Tail)</h4>
+              <div class="queue-badge-list" id="dry-queue-list">
+                <span class="queue-badge empty-state">Queue is empty</span>
+              </div>
+              <div style="margin-top: 0.6rem; font-size: 0.75rem; color: var(--text-dim);" id="dry-arrival-note">
+                Arrivals at this instant: None
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Process Remaining Bursts & History -->
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <div class="dry-run-state-card">
+              <h4>Remaining Burst Times</h4>
+              <div class="remaining-bursts-grid" id="dry-bursts-grid">
+                <!-- Rendered by ui.js -->
+              </div>
+            </div>
+
+            <div class="dry-run-state-card" style="flex: 1;">
+              <h4>Step Audit Log</h4>
+              <div style="max-height: 180px; overflow-y: auto;">
+                <table class="data-table" style="font-size: 0.78rem;">
+                  <thead>
+                    <tr>
+                      <th>Time</th>
+                      <th>Event</th>
+                      <th>Running</th>
+                      <th>Ready</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dry-audit-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 5: THEORY & VIVA VOCE GUIDE -->
+    <!-- =================================================================== -->
+    <section id="tab-theory" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title"><span>📖</span> Operating Systems Scheduling Theory & Viva Voce Reference</h2>
+            <p class="card-subtitle">Comprehensive guide to Problem Statement 55, formulas, algorithms, and viva questions.</p>
+          </div>
+        </div>
+
+        <div class="theory-accordion">
+          <!-- Problem Statement 55 Overview -->
+          <div class="theory-card">
+            <div class="theory-header">
+              <span>🎯 Problem Statement 55: Core Objective & Insights</span>
+              <span>▼</span>
+            </div>
+            <div class="theory-content">
+              <p>
+                <strong>Problem Statement 55:</strong> "Compare average turnaround times of all algorithms on a single process set and highlight the best."
+              </p>
+              <p style="margin-top: 0.5rem;">
+                In multiprogramming systems, the CPU scheduler decides which ready process receives the CPU core. A primary benchmark of scheduling quality is the <strong>Turnaround Time (TAT)</strong>: the total elapsed time between process submission and its final completion.
+              </p>
+              <div class="formula-box">
+                Turnaround Time (TAT) = Completion Time (CT) - Arrival Time (AT)<br>
+                Average Turnaround Time = (Σ TAT) / Number of Processes (N)
+              </div>
+              <p>
+                <strong>Key Takeaway:</strong> <em>Shortest Remaining Time First (SRTF)</em> is provably optimal for minimizing average turnaround and waiting times when all burst times and arrival times are known in advance.
+              </p>
+            </div>
+          </div>
+
+          <!-- Formulas & Metrics -->
+          <div class="theory-card">
+            <div class="theory-header">
+              <span>📐 Essential Scheduling Formulas & Definitions</span>
+              <span>▼</span>
+            </div>
+            <div class="theory-content">
+              <div class="formula-box">
+                1. Completion Time (CT): The timestamp at which a process finishes its execution.<br>
+                2. Turnaround Time (TAT) = CT - AT<br>
+                3. Waiting Time (WT) = TAT - BT (time spent waiting in the ready queue)<br>
+                4. Response Time (RT) = First CPU Allocation Time - AT<br>
+                5. CPU Utilization = (Total Busy Time / Total Simulation Makespan) × 100%<br>
+                6. Throughput = Number of Completed Processes / Total Makespan
+              </div>
+              <h5>Strict Context Switch Convention</h5>
+              <p>
+                A context switch represents CPU overhead saving and restoring process control blocks (PCBs). In accordance with academic operating system principles:
+              </p>
+              <ul style="padding-left: 1.25rem; margin-top: 0.3rem;">
+                <li>Context switches are counted <strong>only</strong> when the CPU transitions from one real process to a <strong>different</strong> real process.</li>
+                <li>Transitions at the very start ($t=0$) or at the very end are not counted.</li>
+                <li>Idle periods do not represent process state saves and are <strong>not</strong> counted as context switches.</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Tie-Breaking Conventions -->
+          <div class="theory-card">
+            <div class="theory-header">
+              <span>⚖️ Tie-Breaking Rules & Queue Conventions</span>
+              <span>▼</span>
+            </div>
+            <div class="theory-content">
+              <h5>1. First-Come, First-Served (FCFS)</h5>
+              <p>Orders arrived processes by earliest arrival time (<code>AT ASC</code>). If arrival times are identical, ties are broken by lower PID (<code>PID ASC</code>, e.g. P1 before P2).</p>
+
+              <h5>2. Shortest Job First (SJF - Non-Preemptive)</h5>
+              <p>Among all arrived processes, picks the one with the smallest burst time (<code>BT ASC</code>). Ties are broken by earlier arrival time, then lower PID. Once running, it cannot be preempted.</p>
+
+              <h5>3. Shortest Remaining Time First (SRTF - Preemptive)</h5>
+              <p>At every discrete time unit, picks the candidate with the smallest remaining burst. <strong>Crucial Rule:</strong> If an arrived candidate has remaining time equal to the currently running process, the CPU does <em>not</em> preempt. Other ties are broken by earlier arrival then lower PID.</p>
+
+              <h5>4. Priority Scheduling (Non-Preemptive & Preemptive)</h5>
+              <p>User toggle determines whether lower numerical values denote higher priority (default ON). Preemptive priority preempts <strong>only</strong> when an arrived process has strictly higher priority than the running job. Equal priority does not trigger preemption.</p>
+
+              <h5>5. Round Robin (RR) Simultaneous Arrival Rule</h5>
+              <p>When a running process exhausts its time slice at the exact same instant $t$ that a new process arrives, the <strong>new arrival is enqueued first</strong> into the ready queue, followed immediately by the re-enqueued preempted process.</p>
+            </div>
+          </div>
+
+          <!-- Viva Voce Frequently Asked Questions -->
+          <div class="theory-card">
+            <div class="theory-header">
+              <span>🎓 Viva Voce Frequently Asked Questions & Answers</span>
+              <span>▼</span>
+            </div>
+            <div class="theory-content">
+              <h5>Q1: Why does SRTF generally produce the lowest average turnaround time?</h5>
+              <p><strong>A:</strong> SRTF is a greedy algorithm that prioritizes processes requiring the least amount of remaining work. By finishing short jobs earlier, their turnaround times are drastically minimized, and they leave the ready queue sooner, dramatically reducing the cumulative waiting time experienced by all other processes.</p>
+
+              <h5>Q2: What is the Convoy Effect in FCFS?</h5>
+              <p><strong>A:</strong> The Convoy Effect occurs when a CPU-bound process with a huge burst time arrives first, forcing numerous short I/O-bound or interactive processes to sit idle in the ready queue, drastically inflating average waiting and turnaround times.</p>
+
+              <h5>Q3: Why is Round Robin preferred in time-sharing systems despite having higher average turnaround time?</h5>
+              <p><strong>A:</strong> Round Robin optimizes for <strong>Response Time</strong> and fairness rather than turnaround time. Every process receives guaranteed CPU attention within $(N - 1) \times q$ time units, ensuring interactive responsiveness for end users.</p>
+
+              <h5>Q4: What is the impact of choosing an extremely small or extremely large Round Robin quantum?</h5>
+              <p><strong>A:</strong> If quantum $q$ is extremely small, CPU spends an excessive percentage of cycles on context switching overhead rather than productive execution. If $q$ is extremely large ($q \ge \max(BT)$), Round Robin degenerates into FCFS.</p>
+
+              <h5>Q5: Can Priority Scheduling cause Starvation, and how is it resolved?</h5>
+              <p><strong>A:</strong> Yes, low-priority processes can starve indefinitely if higher-priority processes keep arriving. The standard operating system solution is <strong>Aging</strong>, gradually increasing the priority of waiting processes as time passes.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Floating Tooltip Element -->
+  <div id="app-tooltip" class="tooltip" role="tooltip"></div>
+
+  <!-- Classic Scripts (Zero ES Modules, 100% Offline file:// Compatible) -->
+  <script src="engine.js"></script>
+  <script src="ui.js"></script>
+</body>
+</html>
